@@ -8,15 +8,11 @@
 
 <body>
     <link rel="stylesheet" href="../lib/leaflet.css" />
-    <link rel="stylesheet" href="kedama-map.css" />
-    <center><div id="map">
+    <link rel="stylesheet" href="kedama-map-legacy.css" />
+    <div style="height:90%"><center><div id="map">
 	Loading...
-    </div></center>
-    <script type="text/javascript">
-	document.querySelector('#map').style.height=((innerHeight-50)+'px');
-	document.querySelector('#map').style.width='auto';
-    </script>
-    <div id="debug" style="height:50px"></div>
+    </div></center></div>
+    <div id="debug"></div>
     <script src="https://silentdepth.me/KedamaMC-Unofficial-Map/markers.js"></script>
     <script src="../lib/leaflet.js"></script>
     <script src="kedama-map.js"></script>

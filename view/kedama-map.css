@@ -1,11 +1,8 @@
-﻿body {
-}
-
-#map {
-    width: 1040px;
-    height: 520px;
+﻿html, body {
+    height: 100%;
 }
 
 #debug {
     text-align:center;
 }
+

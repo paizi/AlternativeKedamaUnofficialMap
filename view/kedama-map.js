@@ -67,7 +67,7 @@ window.onload = function () {
 //		init(data);
 //	});
 
-	let data = getJSON('../data/v2/v2.json' + ' ? time =' + new Date().getTime());
+	let data = getJSON('../data/v2/v2.json' + '?time=' + new Date().getTime());
 	if (markerData)
 		data.marks = markerData;
 	console.log(data);
@@ -134,7 +134,7 @@ window.onload = function () {
 				</div>';
 	}
 	function format02(latlng) {
-		return '(x, z) = ' + Math.round(latlng.lng) + ' , ' + Math.round(latlng.lat)
+		return 'Pointer: ' + Math.round(latlng.lng) + ',' + Math.round(latlng.lat)
 	}
 }
 

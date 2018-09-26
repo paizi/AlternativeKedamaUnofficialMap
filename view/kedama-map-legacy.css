@@ -1,0 +1,10 @@
+﻿#map {
+    width: auto;
+    height: 600px;    
+    position: relative;
+}
+
+#debug {
+    text-align:center;
+}
+
