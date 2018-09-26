@@ -1,7 +1,7 @@
-# data maps
-*.png
-
 # archives
 *.zip
 *.tar.gz
 *.7z
+
+# temp files
+*-tmp.*
