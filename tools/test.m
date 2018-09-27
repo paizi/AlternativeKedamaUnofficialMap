@@ -50,6 +50,9 @@ h = 512;
 w = 512;
 pic = zeros(h, w, 3, 'uint8');
 alpha = zeros(h, w, 'uint8');
+
+
+
 color = zeros(1, 1, 3, 'uint8');
 color(:) = [78, 230, 180];
 for n = 1 : 100 : h
@@ -62,3 +65,16 @@ for n = 6 : 50 : w
    alpha(1:w, n) = 255;
 end
 imwrite(pic, 'testNet.png', 'Alpha', alpha);
+
+
+%%
+clear
+mask = load('banner_icon_mask.mat');
+for n = 1 : size(mask.colors, 2)
+	fc = mask.colors(:,n); 
+    ec = floor(fc * 0.9);
+    sc = [99; 77; 50];
+    [pic, a] = bannerIcon(mask, sc, fc, ec, 127);
+    name = sprintf('banner_icon_%d.png', n);
+    imwrite(pic, name, 'Alpha' ,a);
+end

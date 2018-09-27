@@ -1,19 +1,6 @@
 // JavaScript source code
 var mymap;
 
-function useExtendData(ex, data) {
-	if (ex) {
-		data.marks = [];
-		for (let i = 0; i < ex.length; ++i) {
-			let e = ex[i];
-			data.marks.push({
-				name: e.title,
-				pos:[e.x, e.z]
-			});
-		}
-	}
-}
-
 window.onload = function () {
 	
 
@@ -68,8 +55,13 @@ window.onload = function () {
 //	});
 
 	let data = getJSON('../data/v2/v2.json' + '?time=' + new Date().getTime());
-	if (markerData)
+	try{
 		data.marks = markerData;
+	} catch(e) {
+		if(console['error'])
+			console.error(e);
+	}
+		
 	console.log(data);
 	init(data);
 
