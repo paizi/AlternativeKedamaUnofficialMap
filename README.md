@@ -8,7 +8,9 @@ Alternative plan for repo [SilentDepth/KedamaMC-Unofficial-Map](https://github.c
 
 ### [[github-preview]](https://dwcarrot.github.io/AlternativeKedamaUnofficialMap/view/kedama-map.html)
 
-### 更新方案
+-----------
+
+## 更新方案
 1. 设置`journey map` - `cartography` - (`Show Bathymetry`=TRUE, `Use Transparency`=FALSE)
 
    验证地图颜色与 [SilentDepth/KedamaMC-Unofficial-Map](https://github.com/SilentDepth/KedamaMC-Unofficial-Map)的相同
@@ -17,7 +19,7 @@ Alternative plan for repo [SilentDepth/KedamaMC-Unofficial-Map](https://github.c
 
 2. 获取地形信息
 
-3. `journey map` - `Action` - `save image` 导出地图图片
+3. `journey map` - `Actions` - `save image` 导出地图图片
 
    ![导出图片](tools/tips/jm-save.png)
 

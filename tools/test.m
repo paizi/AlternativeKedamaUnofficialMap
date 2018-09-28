@@ -72,9 +72,9 @@ clear
 mask = load('banner_icon_mask.mat');
 for n = 1 : size(mask.colors, 2)
 	fc = mask.colors(:,n); 
-    ec = floor(fc * 0.9);
+    ec = floor(fc * 0.5);
     sc = [99; 77; 50];
-    [pic, a] = bannerIcon(mask, sc, fc, ec, 127);
+    [pic, a] = bannerIcon(mask, sc, fc, ec, 254);
     name = sprintf('banner_icon_%d.png', n);
     imwrite(pic, name, 'Alpha' ,a);
 end
