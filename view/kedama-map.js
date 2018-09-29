@@ -264,12 +264,12 @@ function KedamaMap() {
 	this.searchMarks = function(keyword) {
 		let res = [];
 		let staticMarkers = this.getStaticMarks();
-		for(let marker in staticMarkers) {
-			if(marker.title == keyword) {
+		for(let i = 0;i < staticMarkers.length; i++) {
+			if(staticMarkers[i].title.indexOf(keyword) != -1) {
 				res.push({
-					name: marker.title,
-					x: marker.x,
-					z: marker.z
+					name: staticMarkers[i].title,
+					x: staticMarkers[i].x,
+					z: staticMarkers[i].z
 				});
 			}
 		}
@@ -297,7 +297,11 @@ window.onload = function () {
 			var keyword = prompt('标记点名称: ','keyword');
 			if(keyword != '') {
 				var res = map.searchMarks(keyword);
-				alert('搜索结果:\n' + res);
+				var mes = '搜索结果:\n';
+				for(let i = 0;i < res.length; i++) {
+					mes += JSON.stringify(res[i]) + '\n';
+				}
+				alert(mes);
 			}
 			else {
 				alert('关键词不能为空');
