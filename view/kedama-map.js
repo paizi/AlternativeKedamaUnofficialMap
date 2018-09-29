@@ -265,7 +265,7 @@ function KedamaMap() {
 		let res = [];
 		let staticMarkers = this.getStaticMarks();
 		for(let marker in staticMarkers) {
-			if(marker.title.indexOf(keyword)) {
+			if(marker.title == keyword) {
 				res.push({
 					name: marker.title,
 					x: marker.x,
