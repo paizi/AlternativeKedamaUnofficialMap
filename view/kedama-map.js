@@ -1,11 +1,91 @@
 // JavaScript source code
-var mymap;
 
-window.onload = function () {
+/**
+ * @ foraphe: 
+ * 希望这些文字不是乱码……
+ * 我稍微做了点封装，如果你以后要修改的话应该会方便些；
+ * 封装成一个类 KedamaMap (虽然看上去是个函数但是实际上……好像js里类就是这么定义的)，使用的话看window.onload里面的例子
+ */
+ 
+ function format01(mark) {
+	return '<div>\
+				<div>' + mark.title + '</div>\
+				<div>' + Math.round(mark.x) + ' , ' + Math.round(mark.z) + '</div>\
+			</div>';
+};
+
+function format02(latlng) {
+	return 'Pointer: ' + Math.round(latlng.lng) + ',' + Math.round(latlng.lat)
+}
+
+function format03(latlng) {
+	return '<div>' + Math.round(latlng.lng) + ',' + Math.round(latlng.lat) + '</div>';
+}
+
+function KedamaMap() {
 	
-
-
-	L.CRS.kedamaMC = function (edgeWid, origin) {
+	/** properties **/
+	this.map = null;							//	leaflet map
+	this.data = { attribution:"", marks:[]};	//	json data
+	this.showMarkers = false;	//	L.markers & whether to show it
+	this.layerMarker = null;
+	this.layerMap = null;
+	this.icons = [];							//	L.icons from icon pictures
+	this.keyPressed = new Array(256);
+	this.onClickCallbacks = {};
+	
+	/** methods **/
+	
+	this.getJSON = function(url, callback, nocache) {
+		if(nocache)
+			url += ('?time=' + new Date().getTime());
+		let that = this;
+		let xmlhttp = new XMLHttpRequest();
+		xmlhttp.onreadystatechange = function() {
+			if(xmlhttp.readyState == 4) {
+				if(xmlhttp.status == 200) {
+					try {
+						that.data = JSON.parse(xmlhttp.responseText);
+						console.debug(that.data);
+						if(callback)
+							callback(that.data);
+					} catch(e) {
+						console.log(e);
+					}
+				} else {
+					console.log(xmlhttp)
+					if(callback)
+						callback(that.data);
+				}
+			}
+		}
+		xmlhttp.open("GET", url, true);
+		xmlhttp.send();
+	};
+	
+	this.MenuControl = L.Control.extend({
+		options: {
+			position: 'topright',
+			items: {}
+		},
+		initialize: function (options) {
+			L.Util.setOptions(this, options);
+		},
+		onAdd: function (map) {
+			this._container = L.DomUtil.create('div', 'leaflet-control-zoom leaflet-bar');
+			let head = L.DomUtil.create('strong', 'menu-head', this._container);
+			head.innerHTML = 'MENU';
+			for(let item in this.options.items) {
+				let dom = L.DomUtil.create('div', 'menu-item', this._container);
+				dom.role = "button"
+				dom.innerHTML = item;
+				L.DomEvent.addListener(dom, 'click', this.options.items[item]);
+			}
+			return this._container;
+		}
+	});
+	
+	this.CRS = function (edgeWid, origin) {
 		/**
 		 * @param <float>edgeWid	: real length of one edge of the image
 		 * @param <L.Point>origin	: pixel position of the Origin; matlab std.(x+,y+ = left,down)
@@ -32,102 +112,189 @@ window.onload = function () {
 			},
 			infinite: true
 		});
-	}
-
-	function getJSON(url) {
-		try {
-			let xmlhttp = new XMLHttpRequest();
-			xmlhttp.open('GET', url, false);
-			xmlhttp.send();
-			let txt = xmlhttp.responseText;
-			return JSON.parse(txt);
-		} catch (e) {
-			console.log(e);
-			return null;
+	};
+	
+	this.loadIcon = function() {
+		this.icons.push(
+			L.icon({
+				iconUrl: 'marker-icon-1x.png',
+				iconSize: [14.5, 23], // size of the icon
+				iconAnchor: [7.25, 22.5], // point of the icon which will correspond to marker's location
+				popupAnchor: [0, -18] // point from which the popup should open relative to the iconAnchor
+			})
+		);
+		for(let i = 1; i <= 16; ++i) {
+			this.icons.push(
+				L.icon({
+					iconUrl: 'banner_icon_' + i + '.png',
+					iconSize: [16, 24], // size of the icon
+					iconAnchor: [8.5, 23], // point of the icon which will correspond to marker's location
+					popupAnchor: [0, -16] // point from which the popup should open relative to the iconAnchor
+				})
+			);
 		}
-	}
-
-//	$.getJSON('../data/v2/v2.json' + '?time=' + new Date().getTime(), function (data) {
-//		if (markerData)
-//			data.marks = markerData;
-//		console.log(data);
-//		init(data);
-//	});
-
-	let data = getJSON('../data/v2/v2.json' + '?time=' + new Date().getTime());
-	try{
-		data.marks = markerData;
-	} catch(e) {
-		if(console['error'])
-			console.error(e);
-	}
-		
-	console.log(data);
-	init(data);
-
-	function simpleSearch(marks, titlep) {
-		let res = new Array();
-		marks.forEach(function (value) {
-			if (value.title.indexOf(titlep) >= 0) {
-				res.push(value);
+		return this.icons;
+	};
+	
+	this.init = function(id, scale) {
+		let that = this;
+		this.map = L.map(id, {
+			renderer: L.canvas({ padding: 0.01 }),
+			crs: this.CRS(scale),
+			zoomSnap: 0.05,
+			zoomDelta: 0.25,
+			closePopupOnClick: true
+		})
+		.setView([0,0], 2)
+		.on('click', function(event) {
+			for(let property in that.onClickCallbacks) {
+				let callback = that.onClickCallbacks[property];
+				if(callback)
+					callback(event);
 			}
 		});
-		return res;
-	}
-
-	function init(data) {
-
-		var icon = L.icon({
-			iconUrl: 'marker-icon-1x.png',
-			iconSize: [50 / 3, 82 / 3], // size of the icon
-			iconAnchor: [24.5 / 3, 81 / 3], // point of the icon which will correspond to marker's location
-			popupAnchor: [0, -71 / 3] // point from which the popup should open relative to the iconAnchor
-		});
-
-		var icon2 = L.icon({
-			iconUrl: 'marker-icon-2x.png',
-			iconSize: [50 / 3, 82 / 3],
-			iconAnchor: [24.5 / 3, 81 / 3],
-			popupAnchor: [0, -71 / 3]
-		});
-
-		mymap = L.map('map', {
-			crs: L.CRS.kedamaMC(9600/(630-13)*640),
-			zoomSnap: 0.05,
-			zoomDelta: 0.25
-		}).setView([0,0], 2);
-		L.tileLayer('../data/{id}/part-{z}-{x}-{y}.png', {
-			attribution: data.attribution,
+		let marker = L.marker([0, 0]);
+		this.layerMarker = L.layerGroup([marker]).addTo(this.map);
+		document.getElementById(id).onkeydown = function(e) {
+			e = e || event;
+　　 　 	that.keyPressed[e.keyCode] = e;
+			console.debug('[down] ', e.key);
+		}
+		document.getElementById(id).onkeyup = function(e) {
+			e = e || event;
+　　 　 	that.keyPressed[e.keyCode] = null;
+			console.debug('[up  ] ', e.key);
+		}
+	};
+	
+	this.registerMap = function(pathFormat) {
+		this.layerMap = L.tileLayer(pathFormat, {
+			attribution: this.data.attribution,
 			maxZoom: 5,
 			id: 'v2'
-		}).addTo(mymap);
+		}).addTo(this.map);
 		L.control.scale({
 			maxWidth: 100
-		}).addTo(mymap);
-		if (data) {
-			let marks = data.marks;
-			if (marks) {
-				for (let i = 0; i < marks.length; ++i) {
-					let mark = marks[i];
-					L.marker([mark.z, mark.x], { icon: icon })
-					 .addTo(mymap)
-					 .bindPopup(format01(mark));
+		}).addTo(this.map);
+	}
+	
+	this.registerPointerShow = function(id) {
+		this.map.on('mousemove', function (event) {
+			document.getElementById(id).innerText = format02(event.latlng);
+		});
+	}
+	
+	this.registerMenu = function(items) {
+		new this.MenuControl({items: items}).addTo(this.map);
+	}
+	
+	this.registerMarks = function() {
+		let key = 16; //keyCode of 'shift'
+		let marks = this.data.marks;
+		let that = this;
+		for (let i = 0; i < marks.length; ++i) {
+			let mark = marks[i];
+			let icon = (mark.icon === undefined) ? this.icons[0] : this.icons[mark.icon]; 
+			this.layerMarker.addLayer(
+				L.marker([mark.z, mark.x], { icon: icon })
+				 .bindPopup(format01(mark))
+			);
+			this.showMarkers = true;
+		}
+		
+		this.onClickCallbacks.showMarks = function(event) {
+			if(that.keyPressed[key]) {
+				if(that.showMarkers) {
+					that.showMarkers = false;
+					that.layerMarker.remove();
+				} else {
+					that.showMarkers = true;
+					that.layerMarker.addTo(that.map);
 				}
 			}
-		}
-		mymap.on('mousemove', function (event) {
-			document.getElementById("debug").innerText = format02(event.latlng);
-		});
+		};
 	};
-	function format01(mark) {
-		return '<div>\
-					<div>' + mark.title + '</div>\
-					<div>' + Math.round(mark.z) + ' , ' + Math.round(mark.x) + '</div>\
-				</div>';
+
+	this.registerUserMarks = function() {
+		let key = 18;
+		let that = this;
+		this.onClickCallbacks.userMarkers = function(event) {
+			if(that.keyPressed[key]) {
+				let mark = L.marker(event.latlng, { icon: that.icons[0] })
+					 .bindPopup(format03(event.latlng));
+				mark.on('click', function() {
+					if(that.keyPressed[key]) {
+						mark.remove();
+						that.keyPressed[key] = null;
+					}
+				});
+				that.layerMarker.addLayer(mark);
+			}
+		}
 	}
-	function format02(latlng) {
-		return 'Pointer: ' + Math.round(latlng.lng) + ',' + Math.round(latlng.lat)
+	
+	/** API **/
+	
+	this.setView = function(x, z) {
+		this.map.setView([z, x], this.map.getMaxZoom());
 	}
+	
+	this.getStaticMarks = function() {
+		let res = [];
+		let markers = this.data.marks;
+		for(let i = 0; i < markers.length; ++i) {
+			let mark = markers[i];
+			res.push({
+				title: mark.title,
+				x: mark.x,
+				z: mark.z
+			});
+		}
+		return res;
+	}
+	
+	this.getUserMarks = function() {
+		let res = [];
+		let markers = this.markers.user;
+		for(let i = 0; i < markers.length; ++i) {
+			let latlng = markers[i].getLatLng();
+			res.push({
+				title: i.toString(),
+				x: latlng.lng,
+				z: latlng.lat
+			});
+		}
+		return res;
+	}
+}
+
+window.onload = function () {
+	
+	var tip = '\
+	+ / - / 鼠标滚轮: 缩放\n\
+	Shift+左        : 显示/隐藏标记点\n\
+	Alt+左          : 放置/取消放置标记点\n\
+	左(点击标记点)  : 显示/隐藏提示';
+	
+	map = new KedamaMap();
+	map.loadIcon();
+	map.init('map', 9600/(630-13)*640);
+	map.registerMenu({
+		"Help": function() {
+			alert(tip);
+		},
+		"Search": function() {
+			alert('还没做完(～o￣3￣)～\n(不会在dom上叠dom)');
+		}
+	})
+	map.getJSON('../data/v2/v2.json', function() {
+		map.registerMap('../data/{id}/part-{z}-{x}-{y}.png');
+		map.registerMarks();
+		map.registerPointerShow('debug');
+		map.registerUserMarks();
+	}, true);
+	
+
 }
 
 

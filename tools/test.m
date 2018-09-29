@@ -78,3 +78,17 @@ for n = 1 : size(mask.colors, 2)
     name = sprintf('banner_icon_%d.png', n);
     imwrite(pic, name, 'Alpha' ,a);
 end
+
+
+%%
+clear
+open('../data/v2/updates.csv');
+%%
+c = 1;
+for n = 1 : length(updates)
+	file = updates{n};
+    [pic, ~, alpha] = imread(file);
+    imshow(alpha)
+    title(num2str(n));
+    pause(1);
+end

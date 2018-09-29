@@ -6,3 +6,15 @@
     text-align:center;
 }
 
+.menu-item {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+}
+
+.menu-item:hover {
+	background-color: #f4f4f4;
+}
