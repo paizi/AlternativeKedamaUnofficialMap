@@ -1,12 +1,5 @@
 // JavaScript source code
 
-/**
- * @ foraphe: 
- * 希望这些文字不是乱码……
- * 我稍微做了点封装，如果你以后要修改的话应该会方便些；
- * 封装成一个类 KedamaMap (虽然看上去是个函数但是实际上……好像js里类就是这么定义的)，使用的话看window.onload里面的例子
- */
- 
  function format01(mark) {
 	return '<div>\
 				<div>' + mark.title + '</div>\
@@ -266,6 +259,22 @@ function KedamaMap() {
 		}
 		return res;
 	}
+
+
+	this.searchMarks = function(keyword) {
+		let res = [];
+		let staticMarkers = this.getStaticMarks();
+		for(let marker in staticMarkers) {
+			if(marker.title.indexOf(keyword)) {
+				res.push({
+					name: marker.title,
+					x: marker.x,
+					z: marker.z
+				});
+			}
+		}
+		return res;
+	}
 }
 
 window.onload = function () {
@@ -284,7 +293,15 @@ window.onload = function () {
 			alert(tip);
 		},
 		"Search": function() {
-			alert('还没做完(～o￣3￣)～\n(不会在dom上叠dom)');
+			//alert('还没做完(～o￣3￣)～\n(不会在dom上叠dom)');
+			var keyword = prompt('标记点名称: ','keyword');
+			if(keyword != '') {
+				var res = map.searchMarks(keyword);
+				alert('搜索结果:\n' + res);
+			}
+			else {
+				alert('关键词不能为空');
+			}
 		}
 	})
 	map.getJSON('../data/v2/v2.json', function() {
