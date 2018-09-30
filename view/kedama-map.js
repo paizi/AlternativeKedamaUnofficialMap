@@ -56,6 +56,36 @@ function KedamaMap() {
 		xmlhttp.send();
 	};
 	
+	this.Dialog = L.Control.extend({
+		options: {
+			position: 'topleft',
+			htmlElement: L.DomUtil.create('div', 'dialog-body')
+		},
+		/**
+		 *	`new map.Dialog({htmlElement: <HTMLElement>})`
+		 *	create an Dialog with a close button to display HTMLElement
+		 */
+		initialize: function(options) {
+			L.Util.setOptions(this, options);
+		},
+		onAdd: function(map) {
+			this._container = L.DomUtil.create('div', 'dialog leaflet-control-container leaflet-bar leaflet-bar');
+			this._close = L.DomUtil.create('input', 'close leaflet-right', this._container);
+			this._close.value = 'X';
+			this._close.type = 'button';
+			let closeDom = L.DomUtil.create('div', 'close-occupation', this._container)
+			closeDom.innerHTML = '&zwnj;'
+			let that = this;
+			L.DomEvent.addListener(this._close, 'click', function() {
+				that.remove();
+			});
+			this._container.appendChild(this.options.htmlElement);
+			return this._container;
+		},
+		onRemove: function(map) {
+		}
+	});
+	
 	this.MenuControl = L.Control.extend({
 		options: {
 			position: 'topright',
@@ -65,12 +95,11 @@ function KedamaMap() {
 			L.Util.setOptions(this, options);
 		},
 		onAdd: function (map) {
-			this._container = L.DomUtil.create('div', 'leaflet-control-zoom leaflet-bar');
+			this._container = L.DomUtil.create('div', 'leaflet-control-container leaflet-bar');
 			let head = L.DomUtil.create('strong', 'menu-head', this._container);
 			head.innerHTML = 'MENU';
 			for(let item in this.options.items) {
 				let dom = L.DomUtil.create('div', 'menu-item', this._container);
-				dom.role = "button"
 				dom.innerHTML = item;
 				L.DomEvent.addListener(dom, 'click', this.options.items[item]);
 			}
@@ -148,6 +177,7 @@ function KedamaMap() {
 		});
 		let marker = L.marker([0, 0]);
 		this.layerMarker = L.layerGroup([marker]).addTo(this.map);
+		marker.remove();
 		document.getElementById(id).onkeydown = function(e) {
 			e = e || event;
 　　 　 	that.keyPressed[e.keyCode] = e;
@@ -275,6 +305,20 @@ function KedamaMap() {
 		}
 		return res;
 	}
+	
+	this.setMark = function(x, z, title, icon) {
+		let key = 18;
+		let that = this;
+		let mark = L.marker([z, x], { icon: this.icons[icon | 0] })
+		.bindPopup(format01({x:x, z:z, title: title}))
+		.on('click', function() {
+			if(that.keyPressed[key]) {
+				mark.remove();
+				that.keyPressed[key] = null;
+			}
+		});
+		this.layerMarker.addLayer(mark);
+	}
 }
 
 window.onload = function () {
@@ -299,13 +343,28 @@ window.onload = function () {
 				var res = map.searchMarks(keyword);
 				var mes = '搜索结果:\n';
 				for(let i = 0;i < res.length; i++) {
+					res[i].index = i;
 					mes += JSON.stringify(res[i]) + '\n';
 				}
-				alert(mes);
+				mes += '-----------------\n';
+				mes += '选择跳转索引:\n';
+				let ind = prompt(mes, '');
+				if(ind) {
+					try {
+						ind = Number(ind);
+						let r = res[ind];
+						map.setView(r.x, r.z);
+					} catch(e) {
+						console.debug(e);
+					}
+				}
 			}
 			else {
 				alert('关键词不能为空');
 			}
+		},
+		"About": function() {
+			
 		}
 	})
 	map.getJSON('../data/v2/v2.json', function() {

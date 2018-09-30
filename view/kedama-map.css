@@ -6,7 +6,9 @@
     text-align:center;
 }
 
-.menu-item {
+.menu-item,
+.menu-head,
+.dialog {
 	background-color: #fff;
 	border-bottom: 1px solid #ccc;
 	display: block;
@@ -15,6 +17,21 @@
 	color: black;
 }
 
+.close-occupation {
+	margin: 5px;
+}
+
+.close {
+	position: absolute;
+}
+
+.close:hover,
 .menu-item:hover {
 	background-color: #f4f4f4;
+}
+
+.dialog-body {
+	margin: 5px;
+	width: 100px;
+	height: 100px;
 }
