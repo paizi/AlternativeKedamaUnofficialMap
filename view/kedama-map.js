@@ -56,20 +56,19 @@ function KedamaMap() {
 		xmlhttp.send();
 	};
 	
+	
+	/*
 	this.Dialog = L.Control.extend({
 		options: {
 			position: 'topleft',
 			htmlElement: L.DomUtil.create('div', 'dialog-body')
 		},
-		/**
-		 *	`new map.Dialog({htmlElement: <HTMLElement>})`
-		 *	create an Dialog with a close button to display HTMLElement
-		 */
+		
 		initialize: function(options) {
 			L.Util.setOptions(this, options);
 		},
 		onAdd: function(map) {
-			this._container = L.DomUtil.create('div', 'dialog leaflet-control-container leaflet-bar leaflet-bar');
+			this._container = L.DomUtil.create('div', 'dialog leaflet-control-container leaflet-bar leaflet-top', this.map._container);
 			this._close = L.DomUtil.create('input', 'close leaflet-right', this._container);
 			this._close.value = 'X';
 			this._close.type = 'button';
@@ -85,6 +84,7 @@ function KedamaMap() {
 		onRemove: function(map) {
 		}
 	});
+	*/
 	
 	this.MenuControl = L.Control.extend({
 		options: {
@@ -199,17 +199,17 @@ function KedamaMap() {
 		L.control.scale({
 			maxWidth: 100
 		}).addTo(this.map);
-	}
+	};
 	
 	this.registerPointerShow = function(id) {
 		this.map.on('mousemove', function (event) {
 			document.getElementById(id).innerText = format02(event.latlng);
 		});
-	}
+	};
 	
 	this.registerMenu = function(items) {
 		new this.MenuControl({items: items}).addTo(this.map);
-	}
+	};
 	
 	this.registerMarks = function() {
 		let key = 16; //keyCode of 'shift'
@@ -254,14 +254,22 @@ function KedamaMap() {
 				that.layerMarker.addLayer(mark);
 			}
 		}
-	}
+	};
 	
 	/** API **/
 	
+	/**
+	 *	`map.setView(<number:x>,<number:z>)`
+	 *	move to position(x,z)
+	 */
 	this.setView = function(x, z) {
 		this.map.setView([z, x], this.map.getMaxZoom());
-	}
+	};
 	
+	/**
+	 *	`map.getStaticMarks()`
+	 *	get an array of static marks in form of `[{title:$title, x:$x, z:$z},...]` 
+	 */
 	this.getStaticMarks = function() {
 		let res = [];
 		let markers = this.data.marks;
@@ -274,8 +282,12 @@ function KedamaMap() {
 			});
 		}
 		return res;
-	}
+	};
 	
+	/**
+	 *	`map.getUserMarks()`
+	 *	get an array of user marks in form of `[{title:$index, x:$x, z:$z},...]`
+	 */
 	this.getUserMarks = function() {
 		let res = [];
 		let markers = this.markers.user;
@@ -288,9 +300,12 @@ function KedamaMap() {
 			});
 		}
 		return res;
-	}
+	};
 
-
+	/**
+	 *	`map.searchMarks(<string:keyword>)`
+	 *	search the static mark list for marks whose title contain keyword
+	 */
 	this.searchMarks = function(keyword) {
 		let res = [];
 		let staticMarkers = this.getStaticMarks();
@@ -304,8 +319,12 @@ function KedamaMap() {
 			}
 		}
 		return res;
-	}
+	};
 	
+	/**
+	 *	`map.setMark(<number:x>,<number:z>,<optional string:title>,<optional int:icon>)`
+	 *	set a mark at position(x,z)
+	 */
 	this.setMark = function(x, z, title, icon) {
 		let key = 18;
 		let that = this;
@@ -318,6 +337,28 @@ function KedamaMap() {
 			}
 		});
 		this.layerMarker.addLayer(mark);
+	};
+	
+	/**
+	 *	`new map.Dialog(<optional HTMLElement:htmlElement>,<optional string:title>)`
+	 *	create an Dialog with a close button to display HTMLElement
+	 */
+	this.dialog = function(htmlElement, title) {
+		if(!title)
+			title = 'Dialog'
+		let _container = L.DomUtil.create('div', 'leaflet-control-container leaflet-bar leaflet-top dialog', this.map._container);
+		let _close = L.DomUtil.create('input', 'close leaflet-right', _container);
+		_close.value = 'X';
+		_close.type = 'button';
+		let closeDom = L.DomUtil.create('div', 'close-occupation', _container)
+		closeDom.innerHTML = title;
+		L.DomEvent.addListener(_close, 'click', function() {
+			L.DomUtil.remove(_container);
+		});
+		if(!htmlElement)
+			htmlElement = L.DomUtil.create('div', 'dialog-body');
+		_container.appendChild(htmlElement);
+		return _container;
 	}
 }
 
@@ -328,6 +369,7 @@ window.onload = function () {
 	Shift+左        : 显示/隐藏标记点\n\
 	Alt+左          : 放置/取消放置标记点\n\
 	左(点击标记点)  : 显示/隐藏提示';
+	
 	
 	map = new KedamaMap();
 	map.loadIcon();
@@ -364,7 +406,7 @@ window.onload = function () {
 			}
 		},
 		"About": function() {
-			
+			map.dialog();
 		}
 	})
 	map.getJSON('../data/v2/v2.json', function() {

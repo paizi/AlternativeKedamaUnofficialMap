@@ -17,11 +17,19 @@
 	color: black;
 }
 
+.dialog {
+	margin: 50px;
+	pointer-events: auto;
+	cursor: default;
+}
+
 .close-occupation {
 	margin: 5px;
+	border-bottom: 1px solid #ccc;
 }
 
 .close {
+	margin: 2px;
 	position: absolute;
 }
 
@@ -32,6 +40,6 @@
 
 .dialog-body {
 	margin: 5px;
-	width: 100px;
+	width: 500px;
 	height: 100px;
 }
