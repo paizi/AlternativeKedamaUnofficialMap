@@ -8,7 +8,7 @@
 };
 
 function format02(latlng) {
-	return 'Pointer: ' + Math.round(latlng.lng) + ',' + Math.round(latlng.lat)
+	return '指向坐标: ' + Math.round(latlng.lng) + ',' + Math.round(latlng.lat)
 }
 
 function format03(latlng) {
@@ -358,6 +358,7 @@ function KedamaMap() {
 		if(!htmlElement)
 			htmlElement = L.DomUtil.create('div', 'dialog-body');
 		_container.appendChild(htmlElement);
+		document.querySelector('.dialog').style.width = (innerWidth - 120) + 'px';
 		return _container;
 	}
 }
@@ -379,15 +380,15 @@ window.onload = function () {
 			alert(tip);
 		},
 		"Search": function() {
-			//alert('还没做完(～o￣3￣)～\n(不会在dom上叠dom)');
 			var keyword = prompt('标记点名称: ','keyword');
-			if(keyword != '') {
+			if(keyword != 'keyword') {
 				var res = map.searchMarks(keyword);
 				var mes = '搜索结果:\n';
 				for(let i = 0;i < res.length; i++) {
 					res[i].index = i;
 					mes += JSON.stringify(res[i]) + '\n';
 				}
+				console.log(mes);
 				mes += '-----------------\n';
 				mes += '选择跳转索引:\n';
 				let ind = prompt(mes, '');
@@ -402,11 +403,15 @@ window.onload = function () {
 				}
 			}
 			else {
-				alert('关键词不能为空');
+				alert('请输入关键词!');
 			}
 		},
 		"About": function() {
-			map.dialog();
+			var cet = document.createElement("center");
+			var p = document.createElement("p");
+			var warn = document.createTextNode("此条目正在开发中...");
+			cet.appendChild(warn);
+			map.dialog(cet, 'About');
 		}
 	})
 	map.getJSON('../data/v2/v2.json', function() {
@@ -418,7 +423,5 @@ window.onload = function () {
 	
 
 }
-
-
 
 
