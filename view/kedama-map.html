@@ -9,17 +9,20 @@
 </head>
 
 <body>
-    <link rel="stylesheet" href="../lib/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
     <link rel="stylesheet" href="kedama-map.css" />
-    <center><div id="map">
-	Loading...
-    </div></center>
+    <center>
+    <div id="map">
+    Loading...
+    </div>
+    </center>
     <script type="text/javascript">
 	document.querySelector('#map').style.height=((innerHeight-50)+'px');
 	document.querySelector('#map').style.width='auto';
     </script>
     <div id="debug" style="height:50px"></div>
-    <script src="../lib/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
+    <script src="map-util.js"></script>
     <script src="kedama-map.js"></script>
 	
 	<div id="template" hidden="hidden">

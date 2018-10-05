@@ -16,7 +16,9 @@ function format03(latlng) {
 }
 
 function KedamaMap() {
-	
+
+	this.util = new MinecraftMapUtil();
+
 	/** properties **/
 	this.map = null;							//	leaflet map
 	this.data = { attribution:"", marks:[]};	//	json data
@@ -26,115 +28,9 @@ function KedamaMap() {
 	this.icons = [];							//	L.icons from icon pictures
 	this.keyPressed = new Array(256);
 	this.onClickCallbacks = {};
-	
+	this.lastUserMarker = null;
+	this._dailog = null;
 	/** methods **/
-	
-	this.getJSON = function(url, callback, nocache) {
-		if(nocache)
-			url += ('?time=' + new Date().getTime());
-		let that = this;
-		let xmlhttp = new XMLHttpRequest();
-		xmlhttp.onreadystatechange = function() {
-			if(xmlhttp.readyState == 4) {
-				if(xmlhttp.status == 200) {
-					try {
-						that.data = JSON.parse(xmlhttp.responseText);
-						console.debug(that.data);
-						if(callback)
-							callback(that.data);
-					} catch(e) {
-						console.log(e);
-					}
-				} else {
-					console.log(xmlhttp)
-					if(callback)
-						callback(that.data);
-				}
-			}
-		}
-		xmlhttp.open("GET", url, true);
-		xmlhttp.send();
-	};
-	
-	
-	/*
-	this.Dialog = L.Control.extend({
-		options: {
-			position: 'topleft',
-			htmlElement: L.DomUtil.create('div', 'dialog-body')
-		},
-		
-		initialize: function(options) {
-			L.Util.setOptions(this, options);
-		},
-		onAdd: function(map) {
-			this._container = L.DomUtil.create('div', 'dialog leaflet-control-container leaflet-bar leaflet-top', this.map._container);
-			this._close = L.DomUtil.create('input', 'close leaflet-right', this._container);
-			this._close.value = 'X';
-			this._close.type = 'button';
-			let closeDom = L.DomUtil.create('div', 'close-occupation', this._container)
-			closeDom.innerHTML = '&zwnj;'
-			let that = this;
-			L.DomEvent.addListener(this._close, 'click', function() {
-				that.remove();
-			});
-			this._container.appendChild(this.options.htmlElement);
-			return this._container;
-		},
-		onRemove: function(map) {
-		}
-	});
-	*/
-	
-	this.MenuControl = L.Control.extend({
-		options: {
-			position: 'topright',
-			items: {}
-		},
-		initialize: function (options) {
-			L.Util.setOptions(this, options);
-		},
-		onAdd: function (map) {
-			this._container = L.DomUtil.create('div', 'leaflet-control-container leaflet-bar');
-			let head = L.DomUtil.create('strong', 'menu-head', this._container);
-			head.innerHTML = 'MENU';
-			for(let item in this.options.items) {
-				let dom = L.DomUtil.create('div', 'menu-item', this._container);
-				dom.innerHTML = item;
-				L.DomEvent.addListener(dom, 'click', this.options.items[item]);
-			}
-			return this._container;
-		}
-	});
-	
-	this.CRS = function (edgeWid, origin) {
-		/**
-		 * @param <float>edgeWid	: real length of one edge of the image
-		 * @param <L.Point>origin	: pixel position of the Origin; matlab std.(x+,y+ = left,down)
-		 */
-		if (edgeWid == undefined)
-			edgeWid = 1;
-		if (origin == undefined)
-			origin = L.point(0.5, 0.5);
-		else
-			origin = origin.divideBy(edgeWid);
-		return L.extend({}, L.CRS.Simple, {
-			projection: L.Projection.LonLat,
-			transformation: new L.Transformation(256 / edgeWid, 256 * origin.x, 256 / edgeWid, 256 * origin.y),
-			scale: function (zoom) {
-				return Math.pow(2, zoom);
-			},
-			zoom: function (scale) {
-				return Math.log(scale) / Math.LN2;
-			},
-			distance: function (latlng1, latlng2) {
-				let dx = latlng2.lng - latlng1.lng;
-				let dy = latlng2.lat - latlng1.lat;
-				return Math.sqrt(dx * dx + dy * dy);
-			},
-			infinite: true
-		});
-	};
 	
 	this.loadIcon = function() {
 		this.icons.push(
@@ -158,11 +54,12 @@ function KedamaMap() {
 		return this.icons;
 	};
 	
-	this.init = function(id, scale) {
+	this.init = function(id, crsOptions) {
 		let that = this;
 		this.map = L.map(id, {
 			renderer: L.canvas({ padding: 0.01 }),
-			crs: this.CRS(scale),
+			//crs: this.CRS(9600/617*256),
+			crs: this.util.CRS(crsOptions),
 			zoomSnap: 0.05,
 			zoomDelta: 0.25,
 			closePopupOnClick: true
@@ -174,8 +71,8 @@ function KedamaMap() {
 				if(callback)
 					callback(event);
 			}
-		});
-		let marker = L.marker([0, 0]);
+			});
+		let marker = L.marker([0, 0], { icon: this.icons[10] });
 		this.layerMarker = L.layerGroup([marker]).addTo(this.map);
 		marker.remove();
 		document.getElementById(id).onkeydown = function(e) {
@@ -189,13 +86,9 @@ function KedamaMap() {
 			console.debug('[up  ] ', e.key);
 		}
 	};
-	
-	this.registerMap = function(pathFormat) {
-		this.layerMap = L.tileLayer(pathFormat, {
-			attribution: this.data.attribution,
-			maxZoom: 5,
-			id: 'v2'
-		}).addTo(this.map);
+
+	this.registerMap = function (pathroot, tileOptions) {
+		this.layerMap = this.util.TileLayer(pathroot, tileOptions).addTo(this.map);
 		L.control.scale({
 			maxWidth: 100
 		}).addTo(this.map);
@@ -207,8 +100,8 @@ function KedamaMap() {
 		});
 	};
 	
-	this.registerMenu = function(items) {
-		new this.MenuControl({items: items}).addTo(this.map);
+	this.registerMenu = function (items) {
+		this.util.MenuControl({ items: items }).addTo(this.map);
 	};
 	
 	this.registerMarks = function() {
@@ -242,19 +135,36 @@ function KedamaMap() {
 		let key = 18;
 		let that = this;
 		this.onClickCallbacks.userMarkers = function(event) {
-			if(that.keyPressed[key]) {
+			if (that.keyPressed[key]) {
+				if (typeof (that.keyPressed[key]) == 'string') {
+					that.keyPressed[key] = {
+						ctx: that.keyPressed[key]
+					}
+					return;
+				}
 				let mark = L.marker(event.latlng, { icon: that.icons[0] })
-					 .bindPopup(format03(event.latlng));
+					.bindPopup(format03(event.latlng));
 				mark.on('click', function() {
 					if(that.keyPressed[key]) {
 						mark.remove();
-						that.keyPressed[key] = null;
+//						that.keyPressed[key] = null;
 					}
 				});
 				that.layerMarker.addLayer(mark);
+				mark.openPopup();
 			}
 		}
 	};
+
+	this.registerLayerControl = function () {
+		let base = {
+			"day": this.layerMap,
+		};
+		let overlay = {
+			"markers": this.layerMarker,
+		}
+		L.control.layers(base, overlay).addTo(this.map);
+	}
 	
 	/** API **/
 	
@@ -333,7 +243,7 @@ function KedamaMap() {
 		.on('click', function() {
 			if(that.keyPressed[key]) {
 				mark.remove();
-				that.keyPressed[key] = null;
+				//that.keyPressed[key] = null;
 			}
 		});
 		this.layerMarker.addLayer(mark);
@@ -374,52 +284,73 @@ window.onload = function () {
 	
 	map = new KedamaMap();
 	map.loadIcon();
-	map.init('map', 9600/(630-13)*640);
-	map.registerMenu({
-		"Help": function() {
-			alert(tip);
-		},
-		"Search": function() {
-			var keyword = prompt('标记点名称: ','keyword');
-			if(keyword != 'keyword') {
-				var res = map.searchMarks(keyword);
-				var mes = '搜索结果:\n';
-				for(let i = 0;i < res.length; i++) {
-					res[i].index = i;
-					mes += JSON.stringify(res[i]) + '\n';
-				}
-				console.log(mes);
-				mes += '-----------------\n';
-				mes += '选择跳转索引:\n';
-				let ind = prompt(mes, '');
-				if(ind) {
-					try {
-						ind = Number(ind);
-						let r = res[ind];
-						map.setView(r.x, r.z);
-					} catch(e) {
-						console.debug(e);
-					}
-				}
-			}
-			else {
-				alert('请输入关键词!');
-			}
-		},
-		"About": function() {
-			var cet = document.createElement("center");
-			var p = document.createElement("p");
-			var warn = document.createTextNode("此条目正在开发中...");
-			cet.appendChild(warn);
-			map.dialog(cet, 'About');
-		}
-	})
-	map.getJSON('../data/v2/v2.json', function() {
-		map.registerMap('../data/{id}/part-{z}-{x}-{y}.png');
+	map.init('map', { scale: 1, tileSize: 1024, picSize: 512, maxZoom: 5 });
+	map.util.getJSON('../data/v2/v2.json', function (data) {
+		map.data = data;
+		map.registerMap('../data', { tileSize: 1024, attribution: data.attribution });
 		map.registerMarks();
 		map.registerPointerShow('debug');
 		map.registerUserMarks();
-	}, true);
+		map.registerLayerControl();
+
+		map.registerMenu({
+			"Help": function () {
+				let dom = document.createElement('div');
+				dom.innerHTML = '<table style="text-align:left;">'
+					+ '<tr><td>+ / - / 鼠标滚轮</td><td>缩放</td></tr>'
+					+ '<tr><td>LayerControl-markers</td><td>显示/隐藏标记点</td></tr>'
+					+ '<tr><td>Menu-Marking</td><td>开启/关闭标记点操作</td></tr>'
+					+ '<tr><td>鼠标左键</td><td>显示/隐藏提示、放置/取消放置标记点</td></tr>'
+					+ '<tr><td>Menu-Search</td><td>搜索标记点，可根据搜索结果索引跳转</td></tr>'
+					+ '</table>';
+				map._dailog = map.dialog(dom, 'Tips');
+			},
+			"Marking": function (e) {
+				if (map.keyPressed[18]) {
+					map.keyPressed[18] = null;
+					e.target.style.backgroundColor = "";
+				} else {
+					map.keyPressed[18] = "menu";
+					e.target.style.backgroundColor = "#AFD";
+				}
+			},
+			"Search": function () {
+				var keyword = prompt('标记点名称: ', 'keyword');
+				if (keyword != 'keyword') {
+					var res = map.searchMarks(keyword);
+					var mes = '搜索结果:\n';
+					for (let i = 0; i < res.length; i++) {
+						res[i].index = i;
+						mes += JSON.stringify(res[i]) + '\n';
+					}
+					console.log(mes);
+					mes += '-----------------\n';
+					mes += '选择跳转索引:\n';
+					let ind = prompt(mes, '');
+					if (ind) {
+						try {
+							ind = Number(ind);
+							let r = res[ind];
+							map.setView(r.x, r.z);
+						} catch (e) {
+							console.debug(e);
+						}
+					}
+				}
+				else {
+					alert('请输入关键词!');
+				}
+			},
+			"About": function () {
+				var cet = document.createElement("center");
+				var p = document.createElement("p");
+				var warn = document.createTextNode("此条目正在开发中...");
+				cet.appendChild(warn);
+				map.dialog(cet, 'About');
+			}
+		});
+
+	}, null, true);
 	
 
 }
