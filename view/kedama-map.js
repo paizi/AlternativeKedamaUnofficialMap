@@ -273,6 +273,8 @@ function KedamaMap() {
 	}
 }
 
+alert('该版本地图不推荐作为正式版本使用\n推荐替代版本\n[jsw YAKM](https://kedama-map.jsw3286.eu.org/v2/#4800,0,0)');
+
 window.onload = function () {
 	
 	var tip = '\
@@ -285,7 +287,7 @@ window.onload = function () {
 	map = new KedamaMap();
 	map.loadIcon();
 	map.init('map', { scale: 1, tileSize: 1024, picSize: 512, maxZoom: 5 });
-	map.util.getJSON('../data/v2/v2.json', function (data) {
+	map.util.getJSON('../data/v2.json', function (data) {
 		map.data = data;
 		map.registerMap('../data', { tileSize: 1024, attribution: data.attribution });
 		map.registerMarks();
