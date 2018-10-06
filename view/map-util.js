@@ -3,10 +3,12 @@ const getAbsURL = function (url) {
     let p = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/;
     if (!url.match(p)) {
         let urlp = url.split('/');
-        let locp = window.location.pathname.split('/');
+        let loc = window.location.pathname;
+        let locp = loc.split('/');
         let i = locp.length - 1;
-        if (locp[i].indexOf('.') >= 0)
+        if (loc[loc.length - 1] != '/')
             --i;
+        ++i;
         for (let j = 0; j < urlp.length; j++) {
             if (urlp[j] == '..') {
                 --i;
@@ -18,8 +20,11 @@ const getAbsURL = function (url) {
             locp[i++] = urlp[j];
         }
         url = window.location.protocol + '//' + window.location.host;
-        for (let j = 0; j < i; ++j)
+        for (let j = 0; j < i; ++j) {
+            if(locp[j] == '')
+                continue;
             url += ('/' + locp[j]);
+        }
     }
     return url;
 }
