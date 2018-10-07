@@ -1,10 +1,7 @@
 // JavaScript source code
 
  function format01(mark) {
-	return '<div>\
-				<div>' + mark.title + '</div>\
-				<div>' + Math.round(mark.x) + ' , ' + Math.round(mark.z) + '</div>\
-			</div>';
+	return '<div><div>' + mark.title + '</div><div>' + Math.round(mark.x) + ' , ' + Math.round(mark.z) + '</div></div>';
 };
 
 function format02(latlng) {
@@ -23,6 +20,7 @@ function KedamaMap() {
 	this.map = null;							//	leaflet map
 	this.data = { attribution:"", marks:[]};	//	json data
 	this.showMarkers = false;	//	L.markers & whether to show it
+	this.layerSMarker = null;
 	this.layerMarker = null;
 	this.layerMap = null;
 	this.icons = [];							//	L.icons from icon pictures
@@ -72,9 +70,7 @@ function KedamaMap() {
 					callback(event);
 			}
 			});
-		let marker = L.marker([0, 0], { icon: this.icons[10] });
-		this.layerMarker = L.layerGroup([marker]).addTo(this.map);
-		marker.remove();
+		
 		document.getElementById(id).onkeydown = function(e) {
 			e = e || event;
 　　 　 	that.keyPressed[e.keyCode] = e;
@@ -108,17 +104,17 @@ function KedamaMap() {
 		let key = 16; //keyCode of 'shift'
 		let marks = this.data.marks;
 		let that = this;
+		this.layerSMarker = L.layerGroup().addTo(this.map);
 		for (let i = 0; i < marks.length; ++i) {
 			let mark = marks[i];
 			let icon = (mark.icon === undefined) ? this.icons[0] : this.icons[mark.icon]; 
-			this.layerMarker.addLayer(
+			this.layerSMarker.addLayer(
 				L.marker([mark.z, mark.x], { icon: icon })
 				 .bindPopup(format01(mark))
 			);
-			this.showMarkers = true;
 		}
 		
-		this.onClickCallbacks.showMarks = function(event) {
+	/*	this.onClickCallbacks.showMarks = function(event) {
 			if(that.keyPressed[key]) {
 				if(that.showMarkers) {
 					that.showMarkers = false;
@@ -128,12 +124,13 @@ function KedamaMap() {
 					that.layerMarker.addTo(that.map);
 				}
 			}
-		};
-	};
+		};*/
+	};	
 
 	this.registerUserMarks = function() {
 		let key = 18;
 		let that = this;
+		this.layerMarker = L.layerGroup().addTo(this.map);
 		this.onClickCallbacks.userMarkers = function(event) {
 			if (that.keyPressed[key]) {
 				if (typeof (that.keyPressed[key]) == 'string') {
@@ -146,7 +143,7 @@ function KedamaMap() {
 					.bindPopup(format03(event.latlng));
 				mark.on('click', function() {
 					if(that.keyPressed[key]) {
-						mark.remove();
+						that.layerMarker.removeLayer(mark);
 //						that.keyPressed[key] = null;
 					}
 				});
@@ -161,7 +158,8 @@ function KedamaMap() {
 			"day": this.layerMap,
 		};
 		let overlay = {
-			"markers": this.layerMarker,
+			"map-markers": this.layerSMarker,
+			"user-markers": this.layerMarker,
 		}
 		L.control.layers(base, overlay).addTo(this.map);
 	}
@@ -200,11 +198,11 @@ function KedamaMap() {
 	 */
 	this.getUserMarks = function() {
 		let res = [];
-		let markers = this.markers.user;
+		let markers = this.layerMarker.getLayers();
 		for(let i = 0; i < markers.length; ++i) {
 			let latlng = markers[i].getLatLng();
 			res.push({
-				title: i.toString(),
+				title: i,
 				x: latlng.lng,
 				z: latlng.lat
 			});
@@ -242,7 +240,7 @@ function KedamaMap() {
 		.bindPopup(format01({x:x, z:z, title: title}))
 		.on('click', function() {
 			if(that.keyPressed[key]) {
-				mark.remove();
+				that.layerMarker.removeLayer(mark);
 				//that.keyPressed[key] = null;
 			}
 		});
@@ -317,6 +315,7 @@ window.onload = function () {
 				}
 			},
 			"Search": function () {
+				/*
 				var keyword = prompt('标记点名称: ', 'keyword');
 				if (keyword != 'keyword') {
 					var res = map.searchMarks(keyword);
@@ -341,7 +340,8 @@ window.onload = function () {
 				}
 				else {
 					alert('请输入关键词!');
-				}
+				}*/
+				map.dialog(searchDialog(map), 'Search');
 			},
 			"About": function () {
 				var cet = document.createElement("center");
@@ -353,8 +353,66 @@ window.onload = function () {
 		});
 
 	}, null, true);
-	
 
 }
 
+function searchDialog(map) {
+	let dom = document.createElement("div");
+	dom.className = "search-dialog-body"
+	let c1 = document.createElement("div");
+	dom.appendChild(c1);
+	let c2_0 = document.createElement("span");
+	c2_0.innerText = "标记点名称:  ";
+	c1.appendChild(c2_0);
+	let c2 = document.createElement("input");
+	c1.appendChild(c2);
 
+	let c4 = document.createElement("div");
+	dom.appendChild(c4);
+	let c5 = document.createElement("table");
+	c4.appendChild(c5);
+	c2.addEventListener("input", function(e) {
+		if(e.target.value == '')
+			return;
+		c5.innerHTML = "";
+		let res = map.searchMarks(e.target.value);
+		for (let i = 0; i < res.length; i++) {
+			let t = document.createElement("tr");
+			t.marker = res[i];
+			let d = [];
+			for(let n = 0; n < 4; ++n)
+				t.appendChild(d[n] = document.createElement("td"));
+			d[0].innerText = t.marker.name;
+			d[1].innerText = t.marker.x + ',' + t.marker.z;
+			d[2].innerText = '跳转'
+			d[2].className = 'td-btn'
+			d[2].addEventListener("click", function(e) {
+				let marker = e.target.parentNode.marker;
+				map.setView(marker.x, marker.z);
+			});
+			d[3].innerText = '复制'
+			d[3].className = 'td-btn'
+			d[3].addEventListener("click", function(e) {
+				let marker = e.target.parentNode.marker;
+				let s = JSON.stringify(marker);
+				clipboard(s);
+			});
+			c5.appendChild(t);
+		}
+	});
+	let c3 = document.createElement("hr")
+	dom.appendChild(c3);
+	return dom;
+}
+
+function clipboard(str) {
+	let input = document.createElement('input');
+	document.body.appendChild(input);
+	input.setAttribute('value', str);
+	input.select();
+	if (document.execCommand('copy')) {
+//		document.execCommand('copy');
+		console.log('copy to clipboard: success `' + str + '`');
+	}
+	document.body.removeChild(input);
+}

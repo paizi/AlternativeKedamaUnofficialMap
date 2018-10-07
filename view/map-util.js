@@ -59,8 +59,8 @@ var MinecraftMapUtil = function () {
     };
 
     this.CRS = function (options) {
-        let scale = 1;		/**  = `real length` / `pixel length`  **/
-        let offset = L.latLng(0, 0);	/** pixel offset **/
+        let scale = 1;      /**  = `real length` / `pixel length`  **/
+        let offset = L.latLng(0, 0);    /** pixel offset **/
         let tileSize = 256;
         let picSize = 256;
         let maxZoom = 0;
@@ -85,62 +85,50 @@ var MinecraftMapUtil = function () {
         return new this._TileLayer(url, options);
     }
 
-	this._TileLayer = L.TileLayer.extend({
-		url: 'localhost:8080',
-		options: {
-			type: 'day',
-			world: 'v2',
-			attribution: '',
-			maxZoom: 5,
-			tileSize: 256
-		},
-		initialize: function (url, options) {
-		    if (url !== undefined)
-		        this.url = getAbsURL(url);
-			L.Util.setOptions(this, options);
-		},
-		getTileUrl: function (coords) {
-			return this.url + '/' + this.options.type + '/' + this.options.world + '/' + coords.z + '/' + coords.x + ',' + coords.y + '.png'
-		},
-		getAttribution: function () {
-			return this.options.attribution;
-		}
-	});
+    this._TileLayer = L.TileLayer.extend({
+        url: 'localhost:8080',
+        options: {
+            type: 'day',
+            world: 'v2',
+            attribution: '',
+            maxZoom: 5,
+            tileSize: 256
+        },
+        initialize: function (url, options) {
+            if (url !== undefined)
+                this.url = getAbsURL(url);
+            L.Util.setOptions(this, options);
+        },
+        getTileUrl: function (coords) {
+            return this.url + '/' + this.options.type + '/' + this.options.world + '/' + coords.z + '/' + coords.x + ',' + coords.y + '.png'
+        },
+        getAttribution: function () {
+            return this.options.attribution;
+        }
+    });
 
-	this.MarkerLayer = function (markerList, options) {
-	    let layer;
-	    if (markerList) {
-	        layer = L.layerGroup(markerList, options);
-	    } else {
-	        let marker = L.marker([0, 0]);
-	        layer = L.layerGroup([marker], options);
-	        marker.remove();
-	    }
-	    return layer;
-	}
+    this.MenuControl = function (options) {
+        return new this._MenuControl(options);
+    }
 
-	this.MenuControl = function (options) {
-	    return new this._MenuControl(options);
-	}
-
-	this._MenuControl = L.Control.extend({
-	    options: {
-	        position: 'topright',
-	        items: {}
-	    },
-	    initialize: function (options) {
-	        L.Util.setOptions(this, options);
-	    },
-	    onAdd: function (map) {
-	        this._container = L.DomUtil.create('div', 'leaflet-control-container leaflet-bar');
-	        let head = L.DomUtil.create('strong', 'menu-head', this._container);
-	        head.innerHTML = 'MENU';
-	        for (let item in this.options.items) {
-	            let dom = L.DomUtil.create('div', 'menu-item', this._container);
-	            dom.innerHTML = item;
-	            L.DomEvent.on(dom, 'click', this.options.items[item], {});
-	        }
-	        return this._container;
-	    }
-	});
+    this._MenuControl = L.Control.extend({
+        options: {
+            position: 'topright',
+            items: {}
+        },
+        initialize: function (options) {
+            L.Util.setOptions(this, options);
+        },
+        onAdd: function (map) {
+            this._container = L.DomUtil.create('div', 'leaflet-control-container leaflet-bar');
+            let head = L.DomUtil.create('strong', 'menu-head', this._container);
+            head.innerHTML = 'MENU';
+            for (let item in this.options.items) {
+                let dom = L.DomUtil.create('div', 'menu-item', this._container);
+                dom.innerHTML = item;
+                L.DomEvent.on(dom, 'click', this.options.items[item], {});
+            }
+            return this._container;
+        }
+    });
 }

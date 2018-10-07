@@ -31,6 +31,10 @@ html {
 	cursor: default;
 }
 
+.leaflet-control-layers-list {
+	text-align: left;
+}
+
 .close-occupation {
 	margin: 5px;
 	border-bottom: 1px solid #ccc;
@@ -50,4 +54,27 @@ html {
 	margin: 5px;
 	width: auto;
 	height: 100px;
+}
+
+.search-dialog-body,
+.search-dialog-body div {
+	text-align: left;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.search-dialog-body input {
+	margin: 10px;
+}
+
+.search-dialog-body table {
+	margin-left: 20px;
+}
+
+.search-dialog-body td {
+	padding-left: 20px;
+}
+
+.td-btn:hover {
+	background-color: #f4f4f4;
 }
