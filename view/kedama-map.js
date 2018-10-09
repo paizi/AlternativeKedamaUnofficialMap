@@ -52,7 +52,7 @@ function KedamaMap() {
 		return this.icons;
 	};
 	
-	this.init = function(id, crsOptions) {
+	this.init = function(id, crsOptions, bounds) {
 		let that = this;
 		this.map = L.map(id, {
 			renderer: L.canvas({ padding: 0.01 }),
@@ -69,7 +69,7 @@ function KedamaMap() {
 				if(callback)
 					callback(event);
 			}
-			});
+		});
 		
 		document.getElementById(id).onkeydown = function(e) {
 			e = e || event;
@@ -85,7 +85,7 @@ function KedamaMap() {
 
 	this.registerMap = function (pathroot, tileOptions) {
 		this.layerMap = this.util.TileLayer(pathroot, tileOptions).addTo(this.map);
-		L.control.scale({
+		this.util.ScaleControl({
 			maxWidth: 100
 		}).addTo(this.map);
 	};
@@ -97,7 +97,7 @@ function KedamaMap() {
 	};
 	
 	this.registerMenu = function (items) {
-		this.util.MenuControl({ items: items }).addTo(this.map);
+		this.util.MenuControl({ position: 'topleft', items: items }).addTo(this.map);
 	};
 	
 	this.registerMarks = function() {

@@ -131,4 +131,72 @@ var MinecraftMapUtil = function () {
             return this._container;
         }
     });
+	
+	this._ScaleControl = L.Control.extend({
+		
+		options: {
+			position: 'bottomleft',
+			maxWidth: 100,	//pixel
+			standard: true,
+			chunk: true,
+			updateWhenIdle: false
+		},
+		onAdd: function (map) {
+			let className = 'leaflet-control-scale',
+				container = L.DomUtil.create('div', className),
+				options = this.options;
+			this._addScales(options, className + '-line', container);
+			map.on(options.updateWhenIdle ? 'moveend' : 'move', this.update, this);
+			map.whenReady(this.update, this);
+			return container;
+		},
+
+		onRemove: function (map) {
+			map.off(this.options.updateWhenIdle ? 'moveend' : 'move', this.update, this);
+		},
+
+		_addScales: function (options, className, container) {
+			if (options.standard) {
+				this._bScale = L.DomUtil.create('div', className, container);
+			}
+			if (options.chunk) {
+				this._cScale = L.DomUtil.create('div', className, container);
+			}
+		},//
+
+		update: function () {
+			let map = this._map,
+				y = map.getSize().y / 2;
+			let maxMeters = map.distance(map.containerPointToLatLng([0, y]), map.containerPointToLatLng([this.options.maxWidth, y]));
+			let ratio = this.options.maxWidth / maxMeters;
+			if (this.options.standard) {
+				let dist = this.getRoundNum(maxMeters);
+				this.updateScale(this._bScale, dist.v * dist.e, 'block', ratio);
+			}
+			if (this.options.chunk) {
+				let dist = this.getRoundNum(maxMeters / 16);
+				this.updateScale(this._cScale, dist.v * dist.e, 'chunk', ratio * 16);
+			}
+		},
+
+		updateScale: function (scale, dist, unit, ratio) {
+			scale.style.width = Math.round(dist * ratio) + 'px';
+			scale.innerHTML = dist + ' ' + unit;
+		},
+
+		getRoundNum: function (num) {
+			let pow10 = Math.pow(10, (Math.floor(num) + '').length - 1),
+				d = num / pow10;
+			d = d >= 10 ? 10 :
+				d >= 5 ? 5 :
+				d >= 2 ? 2 : 1;
+			return {e:pow10 ,v: d};
+		}
+	});
+	
+	this.ScaleControl = function(options) {
+		return new this._ScaleControl(options);
+	}
+
+
 }
