@@ -271,7 +271,7 @@ function KedamaMap() {
 	}
 }
 
-alert('该版本地图不推荐作为正式版本使用\n推荐替代版本\n[jsw YAKM](https://kedama-map.jsw3286.eu.org/v2/#4800,0,0)');
+
 
 window.onload = function () {
 	
@@ -344,6 +344,7 @@ window.onload = function () {
 				map.dialog(searchDialog(map), 'Search');
 			},
 			"About": function () {
+				alert('推荐功能更完善的地图版本\n[jsw YAKM](https://kedama-map.jsw3286.eu.org/v2/#4800,0,0)');
 				var cet = document.createElement("center");
 				var p = document.createElement("p");
 				var warn = document.createTextNode("此条目正在开发中...");

@@ -1,3 +1,9 @@
 
 # temp files
 *-tmp.*
+
+# visual studio profiles
+*.vs
+
+# too large file
+data/main_v2_20180930.png
