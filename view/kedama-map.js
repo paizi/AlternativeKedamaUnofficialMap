@@ -156,7 +156,6 @@ function KedamaMap() {
 
 	this.registerLayerControl = function () {
 		let base = {
-			"v3": this.layerMap,
 			"v2": this.layerMap["v2"],
 			"v3": this.layerMap["v3"]
 		};
@@ -388,6 +387,7 @@ window.onload = function() {
 	var mapGroup = {
 		v2: new MinecraftMapGroup(
 			map,
+			layerGroup.addTo(map);,
 			'../data/{world}/{z}/{x},{y}.png',
 			'../data/v2/v2.json',
 			{
