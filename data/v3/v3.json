@@ -1,0 +1,14 @@
+{
+  "attribution": "Map-Data: &copy; 2018 Kedama-Koiru Monogatari, Map-Page: &copy; 2018 D.W.Carrot &amp; foraphe &amp; paizi",
+  "property": {
+    "world": "v3",
+    "tileSize": 512,
+    "picSize": 512,
+    "maxZoom": 3,
+    "scale": 1,
+    "offsetX": -64,
+    "offsetZ": -64
+  },
+  "markers": [
+  ]
+}
