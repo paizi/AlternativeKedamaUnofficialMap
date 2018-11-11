@@ -387,12 +387,12 @@ window.onload = function() {
 	var mapGroup = {
 		v2: new MinecraftMapGroup(
 			map,
-			layerGroup.addTo(map);,
 			'../data/{world}/{z}/{x},{y}.png',
 			'../data/v2/v2.json',
 			{
 				onloadJSON: function(g) {
 					layerControl.addBaseLayer(g.baseLayer, 'v2');
+					layerControl.addTo(map);
 					g.dynamicLayers['map-markers'] = g.generateDataMarker();
 					g.dynamicLayers['user-markers'] = g.generateUserMarker();
 				},
