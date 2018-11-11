@@ -22,7 +22,7 @@ function KedamaMap() {
 	this.showMarkers = false;	//	L.markers & whether to show it
 	this.layerSMarker = null;
 	this.layerMarker = null;
-	this.layerMap = null;
+	this.layerMap = {};
 	this.icons = [];							//	L.icons from icon pictures
 	this.keyPressed = new Array(256);
 	this.onClickCallbacks = {};
@@ -83,8 +83,9 @@ function KedamaMap() {
 		}
 	};
 
-	this.registerMap = function (pathroot, tileOptions) {
-		this.layerMap = this.util.TileLayer(pathroot, tileOptions).addTo(this.map);
+	this.registerMap = function (world, pathroot, tileOptions) {
+		this.layerMap[world] = this.util.TileLayer(pathroot, tileOptions).addTo(this.map);
+//		this.layerMap[world] = L.tileLayer(pathroot, tileOptions).addTo(this.map);
 		this.util.ScaleControl({
 			maxWidth: 100
 		}).addTo(this.map);
@@ -102,7 +103,7 @@ function KedamaMap() {
 	
 	this.registerMarks = function() {
 		let key = 16; //keyCode of 'shift'
-		let marks = this.data.marks;
+		let marks = this.data.markers;
 		let that = this;
 		this.layerSMarker = L.layerGroup().addTo(this.map);
 		for (let i = 0; i < marks.length; ++i) {
@@ -155,7 +156,8 @@ function KedamaMap() {
 
 	this.registerLayerControl = function () {
 		let base = {
-			"day": this.layerMap,
+			"v2": this.layerMap["v2"],
+			"v3": this.layerMap["v3"]
 		};
 		let overlay = {
 			"map-markers": this.layerSMarker,
@@ -271,9 +273,166 @@ function KedamaMap() {
 	}
 }
 
+	
 
+window.onload = function() {
+	
+	
+	var map_dialog = function(htmlElement, title) {
+		if(!title)
+			title = 'Dialog'
+		let _container = L.DomUtil.create('div', 'leaflet-control-container leaflet-bar leaflet-top dialog', this.map._container);
+		let _close = L.DomUtil.create('input', 'close leaflet-right', _container);
+		_close.value = 'X';
+		_close.type = 'button';
+		let closeDom = L.DomUtil.create('div', 'close-occupation', _container)
+		closeDom.innerHTML = title;
+		L.DomEvent.addListener(_close, 'click', function() {
+			L.DomUtil.remove(_container);
+		});
+		if(!htmlElement)
+			htmlElement = L.DomUtil.create('div', 'dialog-body');
+		_container.appendChild(htmlElement);
+		document.querySelector('.dialog').style.width = (innerWidth - 120) + 'px';
+		return _container;
+	}
+	
+	
+	map = L.map('map', {
+		renderer: L.canvas({ padding: 0.01 }),
+		zoomSnap: 0.05,
+		zoomDelta: 0.25,
+		closePopupOnClick: true
+	}).setView([0,0], 2);
+	
+	//common layer: ControlLayer
+	var layerControl = L.control.layers({}, {}).addTo(map);
+	
+	//common layer: ScaleControl
+	var scaleControl = mapUtil.ScaleControl({
+		maxWidth: 100
+	}).addTo(this.map);
+	
+	//common layer: MenuControl
+	var menuControl = mapUtil.MenuControl({
+		items: {
+			"Help": function () {
+				let dom = document.createElement('div');
+				dom.innerHTML = '<table style="text-align:left;">'
+					+ '<tr><td>+ / - / 鼠标滚轮</td><td>缩放</td></tr>'
+					+ '<tr><td>LayerControl-markers</td><td>显示/隐藏标记点</td></tr>'
+					+ '<tr><td>Menu-Marking</td><td>开启/关闭标记点操作</td></tr>'
+					+ '<tr><td>鼠标左键</td><td>显示/隐藏提示、放置/取消放置标记点</td></tr>'
+					+ '<tr><td>Menu-Search</td><td>搜索标记点，可根据搜索结果索引跳转</td></tr>'
+					+ '</table>';
+				map_dialog(dom, 'Tips');
+			},
+			"Marking": function (e) {
+				if(map['minecraft-map-group']) {
+					if (map['minecraft-map-group'].state.mark) {
+						map['minecraft-map-group'].state.mark = undefined;
+						e.target.style.backgroundColor = "";
+					} else {
+						map['minecraft-map-group'].state.mark = 1;
+						e.target.style.backgroundColor = "#AFD";
+					}
+				}
+			},
+			"Search": function () {
+				/*
+				var keyword = prompt('标记点名称: ', 'keyword');
+				if (keyword != 'keyword') {
+					var res = map.searchMarks(keyword);
+					var mes = '搜索结果:\n';
+					for (let i = 0; i < res.length; i++) {
+						res[i].index = i;
+						mes += JSON.stringify(res[i]) + '\n';
+					}
+					console.log(mes);
+					mes += '-----------------\n';
+					mes += '选择跳转索引:\n';
+					let ind = prompt(mes, '');
+					if (ind) {
+						try {
+							ind = Number(ind);
+							let r = res[ind];
+							map.setView(r.x, r.z);
+						} catch (e) {
+							console.debug(e);
+						}
+					}
+				}
+				else {
+					alert('请输入关键词!');
+				}*/
+				map_dialog(searchDialog(map), 'Search');
+			},
+			"About": function () {
+				alert('推荐功能更完善的地图版本\n[jsw YAKM](https://kedama-map.jsw3286.eu.org/v2/#4800,0,0)');
+				var cet = document.createElement("center");
+				var p = document.createElement("p");
+				var warn = document.createTextNode("此条目正在开发中...");
+				cet.appendChild(warn);
+				map_dialog(cet, 'About');
+			}
+		}
+	}).addTo(map);
+	
+	//register pointer show
+	map.on('mousemove', function (event) {
+		document.getElementById('debug').innerHTML = mapUtil.pointerFormatter(event.latlng);
+	});
+	
+	
+	var mapGroup = {
+		v2: new MinecraftMapGroup(
+			map,
+			'../data/{world}/{z}/{x},{y}.png',
+			'../data/v2/v2.json',
+			{
+				onloadJSON: function(g) {
+					layerControl.addBaseLayer(g.baseLayer, 'v2');
+					g.dynamicLayers['map-markers'] = g.generateDataMarker();
+					g.dynamicLayers['user-markers'] = g.generateUserMarker();
+				},
+				onAdd: function(g) {
+					g.setMapCRS(map);
+					g.setMapOnClick(map);
+					g.addToControlLayer(layerControl);
+					map.setView([0,0], 2);
+				},
+				onRemove: function(g) {
+					g.removeFromControlLayer(layerControl);
+					g.removeMapOnClick(map);
+				}
+			}
+		),
+		v3: new MinecraftMapGroup(
+			map,
+			'../data/{world}/{z}/{x},{y}.png',
+			'../data/v3/v3.json',
+			{
+				onloadJSON: function(g) {
+					layerControl.addBaseLayer(g.baseLayer, 'v3');
+					g.dynamicLayers['map-markers'] = g.generateDataMarker();
+					g.dynamicLayers['user-markers'] = g.generateUserMarker();
+				},
+				onAdd: function(g) {
+					g.setMapCRS(map);
+					g.setMapOnClick(map);
+					g.addToControlLayer(layerControl);
+					map.setView([0,0],5);
+				},
+				onRemove: function(g) {
+					g.removeFromControlLayer(layerControl);
+					g.removeMapOnClick(map);
+				}
+			}
+		),
+	}
+}
 
-window.onload = function () {
+/*window.onload*/ var unuse = function () {
 	
 	var tip = '\
 	+ / - / 鼠标滚轮: 缩放\n\
@@ -281,13 +440,14 @@ window.onload = function () {
 	Alt+左          : 放置/取消放置标记点\n\
 	左(点击标记点)  : 显示/隐藏提示';
 	
-	
+
 	map = new KedamaMap();
 	map.loadIcon();
-	map.init('map', { scale: 1, tileSize: 1024, picSize: 512, maxZoom: 5 });
-	map.util.getJSON('../data/v2.json', function (data) {
+	map.init('map', { scale: 1, tileSize: 512, picSize: 512, maxZoom: 5 });
+	map.util.getJSON('../data/v2/v2.json', function (data) {
 		map.data = data;
-		map.registerMap('../data', { tileSize: 1024, attribution: data.attribution });
+		map.registerMap('v2', '../data/{world}/{z}/{x},{y}.png', {world:'v2', tileSize: 512, attribution: data.attribution });
+		map.registerMap('v3', '../data/{world}/{z}/{x},{y}.png', {world:'v3', tileSize: 512, attribution: data.attribution });
 		map.registerMarks();
 		map.registerPointerShow('debug');
 		map.registerUserMarks();
@@ -412,7 +572,6 @@ function clipboard(str) {
 	input.setAttribute('value', str);
 	input.select();
 	if (document.execCommand('copy')) {
-//		document.execCommand('copy');
 		console.log('copy to clipboard: success `' + str + '`');
 	}
 	document.body.removeChild(input);

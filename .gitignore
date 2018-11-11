@@ -6,4 +6,5 @@
 *.vs
 
 # too large file
-data/main_v2_20180930.png
+data/v2-*.png
+data/v3-*.png
