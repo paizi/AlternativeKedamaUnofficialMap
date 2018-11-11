@@ -156,6 +156,7 @@ function KedamaMap() {
 
 	this.registerLayerControl = function () {
 		let base = {
+			"v3": this.layerMap,
 			"v2": this.layerMap["v2"],
 			"v3": this.layerMap["v3"]
 		};
